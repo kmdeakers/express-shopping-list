@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 const express = require("express");
 
@@ -7,29 +7,73 @@ const { BadRequestError, NotFoundError } = require("./expressErrors");
 const { it } = require("node:test");
 const router = new express.Router();
 
+function findItemInItems(input) {
+  const foundItem = items.find((item) => item.name === input);
+  if (!foundItem)
+    throw new NotFoundError(`There is no ${itemName} in your list!`);
+  return foundItem;
+}
 
+function validatePrice(price) {
+  if (isNaN(Number(price)) || Number(req.body.price) < 0)
+    throw new BadRequestError("Invalid price!");
 
+  return Number(price);
+}
+
+/** returns all items :
+  { items: [
+    { name: "popsicle", price: 1.45 },
+    { name: "cheerios", price: 3.40 }
+    ]}
+*/
 router.get("/", function (req, res) {
+  if (items.length > 0) return res.json({ items });
 
-    return res.json( { items } );
+  throw new NotFoundError("There are no items!");
 });
 
+/**adds item to items:
+ * {name: "popsicle", price: 1.45} =>
+  {added: {name: "popsicle", price: 1.45}}
+ */
 router.post("/", function (req, res) {
-    if (req.body.name && !isNaN(Number(req.body.price))) {
-    items.push(req.body); 
-    } else {
-        throw new BadRequestError("Invalid Input");
-    };
-    return res.json( {added: req.body})
-})
+  if (!req.body.name) throw new BadRequestError("Name missing!");
+  const itemPrice = validatePrice(req.body.price);
 
-router.get("/:name", req, res) {
-    const itemName = req.params.name;
-    const foundItem = items.find(item => 
-         item.name === itemName);
-    if (foundItem) {     
-    return res.json(foundItem)
-    } else {
-        throw new NotFoundError("The item you requested does not exist")
+  const newItem = { name: req.body.name, price: itemPrice };
+  items.push(newItem);
+
+  return res.json({ added: newItem });
+});
+
+/** returns single item:
+ * {name: "popsicle", "price": 1.45}
+ */
+router.get("/:name", function (req, res) {
+  const item = findItemInItems(req.params.name);
+
+  return res.json(item);
+});
+
+/** modifys item properties:
+ * {name: "new popsicle", price: 2.45} =>
+  {updated: {name: "new popsicle", price: 2.45}}
+ */
+router.patch("/:name", function (req, res) {
+  const item = findItemInItems(req.params.name);
+  item.name = req.body.name || item.name;
+  item.price = validatePrice(req.body.price) || item.price;
+
+
+  return res.json({ updated: item });
+});
+
+router.delete("/:name", function (req, res) {
+  for (const item of items){
+    if (item.name === req.params.name){
+        items.splice(items.indexOf(item), 1);
     }
-}
+  }
+
+});
