@@ -2,20 +2,21 @@
 
 const express = require("express");
 
+
 const db = require("./fakeDb");
 const { BadRequestError, NotFoundError } = require("./expressErrors");
-const { it } = require("node:test");
+
 const router = new express.Router();
 
 function findItemInItems(input) {
   const foundItem = items.find((item) => item.name === input);
   if (!foundItem)
-    throw new NotFoundError(`There is no ${itemName} in your list!`);
+    throw new NotFoundError(`There is no ${input} in your list!`);
   return foundItem;
 }
 
 function validatePrice(price) {
-  if (isNaN(Number(price)) || Number(req.body.price) < 0)
+  if (isNaN(Number(price)) || Number(price) < 0)
     throw new BadRequestError("Invalid price!");
 
   return Number(price);
@@ -75,5 +76,7 @@ router.delete("/:name", function (req, res) {
         items.splice(items.indexOf(item), 1);
     }
   }
-
+  return res.json( {message: "deleted"})
 });
+
+// module.exports = itemsRoutes 
